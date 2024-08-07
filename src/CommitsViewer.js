@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import axios from 'axios';
 import { FetchForm } from './FetchForm';
 import { Spin } from 'antd';
@@ -64,8 +64,29 @@ const CommitsViewer = () => {
       .map(v => v.sha);
   };
 
-  const uniqueDevelopCommitsSha = getUniqueCommitsSha(developCommits, masterCommits);
-  const uniqueMasterCommitsSha = getUniqueCommitsSha(masterCommits, developCommits);
+  const [uniqueDevelopCommitsSha, uniqueMasterCommitsSha] = useMemo(() => {
+    const d = getUniqueCommitsSha(developCommits, masterCommits);
+    const m = getUniqueCommitsSha(masterCommits, developCommits);
+    return [d, m];
+  }, [developCommits, masterCommits]);
+
+  const develops = useMemo(() => {
+    return developCommits.map((v) => {
+      return {
+        ...v,
+        isDup: uniqueDevelopCommitsSha.includes(v.sha),
+      }
+    });
+  }, [developCommits, uniqueDevelopCommitsSha]);
+
+  const masters = useMemo(() => {
+    return masterCommits.map((v) => {
+      return {
+        ...v,
+        isDup: uniqueMasterCommitsSha.includes(v.sha),
+      }
+    });
+  }, [masterCommits, uniqueMasterCommitsSha]);
 
   return (
     <div className="p-4">
@@ -77,11 +98,10 @@ const CommitsViewer = () => {
         <div className="w-1/2">
           <h2 className="text-xl font-semibold mb-2">Dev Branch</h2>
           <ul className="list-disc pl-5 space-y-2">
-            {developCommits.map(commit => (
+            {develops.map(commit => (
               <li
                 key={commit.sha}
-                className={`p-2 rounded ${uniqueDevelopCommitsSha.includes(commit.sha) ? 'bg-yellow-200' : ''
-                  }`}
+                className={`p-2 rounded ${commit.isDup ? 'bg-yellow-200' : ''}`}
               >
                 {commit.commit.message}
               </li>
@@ -91,11 +111,10 @@ const CommitsViewer = () => {
         <div className="w-1/2">
           <h2 className="text-xl font-semibold mb-2">Master Branch</h2>
           <ul className="list-disc pl-5 space-y-2">
-            {masterCommits.map(commit => (
+            {masters.map(commit => (
               <li
                 key={commit.sha}
-                className={`p-2 rounded ${uniqueMasterCommitsSha.includes(commit.sha) ? 'bg-blue-200' : ''
-                  }`}
+                className={`p-2 rounded ${commit.isDup ? 'bg-blue-200' : ''}`}
               >
                 {commit.commit.message}
               </li>
