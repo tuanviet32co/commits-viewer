@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import axios from 'axios';
 import { FetchForm } from './FetchForm';
 import { Spin } from 'antd';
+import { CommitItem } from './CommitItem';
 
 const CommitsViewer = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -97,27 +98,17 @@ const CommitsViewer = () => {
       <div className="flex space-x-4">
         <div className="w-1/2">
           <h2 className="text-xl font-semibold mb-2">Dev Branch</h2>
-          <ul className="list-disc pl-5 space-y-2">
+          <ul className="list-disc pl-5 space-y-4">
             {develops.map(commit => (
-              <li
-                key={commit.sha}
-                className={`p-2 rounded ${commit.isDup ? 'bg-yellow-200' : ''}`}
-              >
-                {commit.commit.message}
-              </li>
+              <CommitItem key={commit.sha} data={commit.commit.message} isDup={commit.isDup} />
             ))}
           </ul>
         </div>
         <div className="w-1/2">
           <h2 className="text-xl font-semibold mb-2">Master Branch</h2>
-          <ul className="list-disc pl-5 space-y-2">
+          <ul className="list-disc pl-5 space-y-4">
             {masters.map(commit => (
-              <li
-                key={commit.sha}
-                className={`p-2 rounded ${commit.isDup ? 'bg-blue-200' : ''}`}
-              >
-                {commit.commit.message}
-              </li>
+              <CommitItem key={commit.sha} data={commit.commit.message} isDup={commit.isDup} />
             ))}
           </ul>
         </div>
