@@ -1,18 +1,21 @@
 import React, { useMemo, useState } from 'react';
 import axios from 'axios';
 import { FetchForm } from './FetchForm';
-import { Spin } from 'antd';
+import { Button, Spin } from 'antd';
 import { CommitItem } from './CommitItem';
 
 const CommitsViewer = () => {
+  const [argsState, setArgsState] = useState(1);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [developCommits, setDevelopCommits] = useState([]);
   const [masterCommits, setMasterCommits] = useState([]);
 
   const fetchCommits = async (branch, args) => {
     const per_pageVal = `per_page=${args.per_page}`;
-    const sinceVal = args.since ? `&since=${args.since}` : '';
-    const queryVal = `?sha=${branch}&${per_pageVal}${sinceVal}`;
+    const pageVal = `page=${args.page}`;
+    // const sinceVal = args.since ? `&since=${args.since}` : '';
+    const queryVal = `?sha=${branch}&${per_pageVal}&${pageVal}`;
 
     try {
       const response = await axios.get(
@@ -30,14 +33,30 @@ const CommitsViewer = () => {
   };
 
   const handleFetchCommits = async (args) => {
+    const per_page = Math.min(args.per_page, 100);
+    const page_count = args.per_page <= 100 ? 1 : Math.floor(args.per_page / 100);
     setIsLoading(true);
     const [develop, master] = await Promise.all([
-      fetchCommits('develop', args),
-      fetchCommits('master', args),
+      Promise.all([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits('develop', { page: n, per_page }))),
+      Promise.all([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits('master', { page: n, per_page }))),
     ]);
     setIsLoading(false);
-    setDevelopCommits(develop);
-    setMasterCommits(master);
+    setDevelopCommits(develop.flat());
+    setMasterCommits(master.flat());
+  };
+
+
+  const handleLoadMore = async () => {
+    setIsLoadingMore(true);
+    const nextArgsState = { ...argsState, page: argsState.page + 1 };
+    setArgsState(nextArgsState);
+    const [develop, master] = await Promise.all([
+      fetchCommits('develop', nextArgsState),
+      fetchCommits('master', nextArgsState),
+    ]);
+    setIsLoadingMore(false);
+    setDevelopCommits(v => [...v, ...develop]);
+    setMasterCommits(v => [...v, ...master]);
   };
 
   const getUniqueCommitsSha = (commits1, commits2) => {
@@ -113,6 +132,10 @@ const CommitsViewer = () => {
           </ul>
         </div>
       </div>
+      {develops.length > 0 &&
+        <div className='flex justify-center items-center p-6'>
+          <Button loading={isLoadingMore} onClick={handleLoadMore}>Load more</Button>
+        </div>}
     </div>
   );
 };

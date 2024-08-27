@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Form, DatePicker, InputNumber, Button } from 'antd';
+import { Form, DatePicker, Button, Select } from 'antd';
 import moment from 'moment';
 import dayjs from 'dayjs';
 
@@ -58,9 +58,20 @@ export const FetchForm = ({ onSummit }) => {
         label="Per Page"
         name="per_page"
       >
-        <InputNumber min={20} />
+        <Select
+          options={[
+            { value: 20, label: 20 },
+            { value: 50, label: 50 },
+            { value: 100, label: 100 },
+            { value: 200, label: 200 },
+            { value: 300, label: 300 },
+            { value: 400, label: 400 },
+            { value: 500, label: 500 },
+            { value: 700, label: 700 },
+          ]}
+        />
       </Form.Item>
-      <Form.Item
+      {/* <Form.Item
         label="Since"
         name="since"
       >
@@ -68,7 +79,7 @@ export const FetchForm = ({ onSummit }) => {
           allowClear
           disabledDate={(current) => current && current > moment()}
         />
-      </Form.Item>
+      </Form.Item> */}
       <Form.Item>
         <Button type="primary" htmlType="submit">
           Submit
