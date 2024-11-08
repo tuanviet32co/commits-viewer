@@ -1,7 +1,15 @@
 import React, { useState } from 'react';
 import { Button } from 'antd';
 
-export const CommitItem = ({ data, isDup }) => {
+export const CommitItem = ({
+  index,
+  data,
+  isDup,
+  isSkip,
+  updateToSkip,
+  isPick,
+  updateToPick
+}) => {
   const [expanded, setExpanded] = useState(false);
 
   const handleExpand = () => {
@@ -15,15 +23,21 @@ export const CommitItem = ({ data, isDup }) => {
 
   return (
     <div
-      className={`px-6 py-3 rounded border border-stone-200 ${isDup ? 'bg-yellow-100' : ''}`}
+      className={`px-6 py-3 rounded border border-stone-200 ${isSkip ? ' bg-gray-200' : isDup ? 'bg-yellow-100' : ''}`}
     >
       <div className='flex justify-between items-center'>
-        <div>{defaultLine}</div>
+        <div className='flex-1'>{index + 1}. {defaultLine}</div>
         {detailLines?.length && JSON.stringify(detailLines) !== '[""]' &&
           <Button type="link" onClick={handleExpand}>
             {expanded ? 'Collapse' : 'Expand'}
           </Button>
         }
+        <Button type="link" onClick={updateToPick} className={`${isPick ? ' text-red-500' : ''}`}>
+          {isPick ? 'Un-Pick' : 'Pick'}
+        </Button>
+        <Button type="link" onClick={updateToSkip}>
+          {isSkip ? 'No-Skip' : 'Skip'}
+        </Button>
       </div>
 
       {expanded && (

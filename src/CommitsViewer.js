@@ -4,12 +4,50 @@ import { FetchForm } from './FetchForm';
 import { Button, Spin } from 'antd';
 import { CommitItem } from './CommitItem';
 
+
+const SKIP_DEVELOP = 'SKIP_DEVELOP';
+const SKIP_MASTER = 'SKIP_MASTER';
+
+const PICK_DEVELOP = 'PICK_DEVELOP';
+const PICK_MASTER = 'PICK_MASTER';
+
 const CommitsViewer = () => {
+
   const [argsState, setArgsState] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [developCommits, setDevelopCommits] = useState([]);
   const [masterCommits, setMasterCommits] = useState([]);
+
+  const [skipDevelop, setSkipDevelop] = useState(JSON.parse(localStorage.getItem(SKIP_DEVELOP) || "[]"));
+  const [skipMaster, setSkipMaster] = useState(JSON.parse(localStorage.getItem(SKIP_MASTER) || "[]"));
+
+  const updateToSkip = (sha, isMaster) => {
+    if (isMaster) {
+      const newData = skipMaster.includes(sha) ? skipMaster.filter(a => a !== sha) : [...skipMaster, sha];
+      setSkipMaster(newData);
+      localStorage.setItem(SKIP_MASTER, JSON.stringify(newData));
+    } else {
+      const newData = skipDevelop.includes(sha) ? skipDevelop.filter(a => a !== sha) : [...skipDevelop, sha];
+      setSkipDevelop(newData);
+      localStorage.setItem(SKIP_DEVELOP, JSON.stringify(newData));
+    }
+  }
+
+  const [pickDevelop, setPickDevelop] = useState(JSON.parse(localStorage.getItem(PICK_DEVELOP) || "[]"));
+  const [pickMaster, setPickMaster] = useState(JSON.parse(localStorage.getItem(PICK_MASTER) || "[]"));
+
+  const updateToPick = (sha, isMaster) => {
+    if (isMaster) {
+      const newData = pickMaster.includes(sha) ? pickMaster.filter(a => a !== sha) : [...pickMaster, sha];
+      setPickMaster(newData);
+      localStorage.setItem(PICK_MASTER, JSON.stringify(newData));
+    } else {
+      const newData = pickDevelop.includes(sha) ? pickDevelop.filter(a => a !== sha) : [...pickDevelop, sha];
+      setPickDevelop(newData);
+      localStorage.setItem(PICK_DEVELOP, JSON.stringify(newData));
+    }
+  }
 
   const fetchCommits = async (branch, args) => {
     const per_pageVal = `per_page=${args.per_page}`;
@@ -118,16 +156,34 @@ const CommitsViewer = () => {
         <div className="w-1/2">
           <h2 className="text-xl font-semibold mb-2">Dev Branch</h2>
           <ul className="list-disc pl-5 space-y-4">
-            {develops.map(commit => (
-              <CommitItem key={commit.sha} data={commit.commit.message} isDup={commit.isDup} />
+            {develops.map((commit, index) => (
+              <CommitItem
+                index={index}
+                key={commit.sha}
+                data={commit.commit.message}
+                isDup={commit.isDup}
+                isSkip={skipDevelop.includes(commit.sha)}
+                updateToSkip={() => updateToSkip(commit.sha, false)}
+                isPick={pickDevelop.includes(commit.sha)}
+                updateToPick={() => updateToPick(commit.sha, false)}
+              />
             ))}
           </ul>
         </div>
         <div className="w-1/2">
           <h2 className="text-xl font-semibold mb-2">Master Branch</h2>
           <ul className="list-disc pl-5 space-y-4">
-            {masters.map(commit => (
-              <CommitItem key={commit.sha} data={commit.commit.message} isDup={commit.isDup} />
+            {masters.map((commit, index) => (
+              <CommitItem
+                index={index}
+                key={commit.sha}
+                data={commit.commit.message}
+                isDup={commit.isDup}
+                isSkip={skipMaster.includes(commit.sha)}
+                updateToSkip={() => updateToSkip(commit.sha, true)}
+                isPick={pickMaster.includes(commit.sha)}
+                updateToPick={() => updateToPick(commit.sha, true)}
+              />
             ))}
           </ul>
         </div>
