@@ -24,8 +24,8 @@ jobs:
       - name: Build the React app
         run: npm run build
         env:
-          REACT_APP_REPOS_PATH: {{ secrets.REACT_APP_REPOS_PATH }}
-          REACT_APP_GITHUB_TOKEN: {{ secrets.REACT_APP_GITHUB_TOKEN }}
+          REACT_APP_REPOS_PATH: ${{ secrets.REACT_APP_REPOS_PATH }}
+          REACT_APP_GITHUB_TOKEN: ${{ secrets.REACT_APP_GITHUB_TOKEN }}
 
       - name: Set up s3cmd
         run: |
@@ -47,4 +47,3 @@ jobs:
           BUCKET_NAME: co-commit-viewer
         run: |
           s3cmd sync --acl-public --delete-removed --no-mime-magic --guess-mime-type build/ s3://$BUCKET_NAME/
-
