@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Form, DatePicker, Button, Select } from 'antd';
+import { Form, Button, Select } from 'antd';
 import moment from 'moment';
 import dayjs from 'dayjs';
 
@@ -71,15 +71,6 @@ export const FetchForm = ({ onSummit }) => {
           ]}
         />
       </Form.Item>
-      {/* <Form.Item
-        label="Since"
-        name="since"
-      >
-        <DatePicker
-          allowClear
-          disabledDate={(current) => current && current > moment()}
-        />
-      </Form.Item> */}
       <Form.Item>
         <Button type="primary" htmlType="submit">
           Submit
