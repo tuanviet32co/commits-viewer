@@ -45,5 +45,6 @@ jobs:
       - name: Sync build files to S3-compatible bucket
         env:
           BUCKET_NAME: co-commit-viewer
+          HOME: /home/runner # Ensure s3cmd looks here for .s3cfg
         run: |
           s3cmd sync --acl-public --delete-removed --no-mime-magic --guess-mime-type build/ s3://$BUCKET_NAME/
