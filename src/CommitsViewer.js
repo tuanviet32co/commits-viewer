@@ -76,7 +76,8 @@ const CommitsViewer = () => {
     setIsLoading(true);
     const [develop, master] = await Promise.all([
       Promise.all([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits('develop', { page: n, per_page }))),
-      Promise.all([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits('master', { page: n, per_page }))),
+      // Promise.all([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits('master', { page: n, per_page }))),
+      Promise.all([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits('deploy/toan-env-from-develop', { page: n, per_page }))),
     ]);
     setIsLoading(false);
     setDevelopCommits(develop.flat());

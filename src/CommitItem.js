@@ -1,5 +1,46 @@
-import React, { useState } from 'react';
+import  { useState } from 'react';
 import { Button } from 'antd';
+
+const JiraLine = ({ defaultLine, index }) => {
+  // Regex for Jira ticket (FRON-12653 or Fron 12607)
+  const jiraRegex = /(FRON[-\s]?\d+)/i;
+  // Regex for PR number (#1570)
+  const prRegex = /#(\d+)/;
+
+  let line = defaultLine;
+
+  // --- JIRA ---
+  const jiraMatch = line.match(jiraRegex);
+  let jiraLink = null;
+  if (jiraMatch) {
+    const ticket = jiraMatch[0].replace(/\s/, "-"); // normalize Fron 12607 → FRON-12607
+    const jiraUrl = `https://frontierco.atlassian.net/browse/${ticket.toUpperCase()}`;
+    line = line.replace(
+      jiraMatch[0],
+      `<a href="${jiraUrl}" target="_blank" class="text-blue-600 underline">${jiraMatch[0]}</a>`
+    );
+  }
+
+  // --- PR ---
+  const prMatch = line.match(prRegex);
+  if (prMatch) {
+    const prNumber = prMatch[1];
+    const prUrl = `https://github.com/32S-Dental/frontend/pull/${prNumber}/files`;
+    line = line.replace(
+      prMatch[0],
+      `<a href="${prUrl}" target="_blank" class="text-blue-600 underline">#${prNumber}</a>`
+    );
+  }
+
+  return (
+    <div
+      className="flex-1"
+      dangerouslySetInnerHTML={{
+        __html: `${index + 1}. ${line}`,
+      }}
+    />
+  );
+};
 
 export const CommitItem = ({
   index,
@@ -26,7 +67,7 @@ export const CommitItem = ({
       className={`px-6 py-3 rounded border border-stone-200 ${isSkip ? ' bg-gray-200' : isDup ? 'bg-yellow-100' : ''}`}
     >
       <div className='flex justify-between items-center'>
-        <div className='flex-1'>{index + 1}. {defaultLine}</div>
+        <JiraLine index={index} defaultLine={defaultLine}/>
         {detailLines?.length && JSON.stringify(detailLines) !== '[""]' &&
           <Button type="link" onClick={handleExpand}>
             {expanded ? 'Collapse' : 'Expand'}
