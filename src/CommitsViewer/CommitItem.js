@@ -1,5 +1,6 @@
 import  { useState } from 'react';
 import { Button } from 'antd';
+import { CopyCherryCommit } from './CopyCherryCommit';
 
 const JiraLine = ({ defaultLine, index }) => {
   // Regex for Jira ticket (FRON-12653 or Fron 12607)
@@ -43,6 +44,7 @@ const JiraLine = ({ defaultLine, index }) => {
 };
 
 export const CommitItem = ({
+  sha,
   index,
   data,
   isDup,
@@ -68,6 +70,7 @@ export const CommitItem = ({
     >
       <div className='flex justify-between items-center'>
         <JiraLine index={index} defaultLine={defaultLine}/>
+        <CopyCherryCommit sha={sha} />
         {detailLines?.length && JSON.stringify(detailLines) !== '[""]' &&
           <Button type="link" onClick={handleExpand}>
             {expanded ? 'Collapse' : 'Expand'}

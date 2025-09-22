@@ -1,6 +1,6 @@
-import React, { useMemo, useState } from 'react';
+import { useMemo, useState } from 'react';
 import axios from 'axios';
-import { FetchForm } from './FetchForm';
+import { FetchForm } from '../FetchForm';
 import { Button, Spin } from 'antd';
 import { CommitItem } from './CommitItem';
 
@@ -76,8 +76,11 @@ const CommitsViewer = () => {
     setIsLoading(true);
     const [develop, master] = await Promise.all([
       Promise.all([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits('develop', { page: n, per_page }))),
-      // Promise.all([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits('master', { page: n, per_page }))),
-      Promise.all([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits('deploy/toan-env-from-develop', { page: n, per_page }))),
+      // Promise.all([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits('beta', { page: n, per_page }))),
+      // Promise.all([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits('demo', { page: n, per_page }))),
+      Promise.all([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits('master', { page: n, per_page }))),
+      // Promise.all([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits('main', { page: n, per_page }))),
+      // Promise.all([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits('deploy/toan-env-from-develop', { page: n, per_page }))),
     ]);
     setIsLoading(false);
     setDevelopCommits(develop.flat());
@@ -159,8 +162,9 @@ const CommitsViewer = () => {
           <ul className="list-disc pl-5 space-y-4">
             {develops.map((commit, index) => (
               <CommitItem
-                index={index}
                 key={commit.sha}
+                sha={commit.sha}
+                index={index}
                 data={commit.commit.message}
                 isDup={commit.isDup}
                 isSkip={skipDevelop.includes(commit.sha)}
@@ -176,8 +180,9 @@ const CommitsViewer = () => {
           <ul className="list-disc pl-5 space-y-4">
             {masters.map((commit, index) => (
               <CommitItem
-                index={index}
                 key={commit.sha}
+                sha={commit.sha}
+                index={index}
                 data={commit.commit.message}
                 isDup={commit.isDup}
                 isSkip={skipMaster.includes(commit.sha)}
