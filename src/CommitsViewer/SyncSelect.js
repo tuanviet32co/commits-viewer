@@ -9,6 +9,7 @@ export const SyncSelect = ({
   setValue,
   storageValueKey,
   defaultReposOptions = [],
+  hideAddOption = false,
   className,
 }) => {
   const storageOptionsKey = `${storageValueKey}_OPTIONS`;
@@ -52,7 +53,7 @@ export const SyncSelect = ({
         setValue(val);
         localStorage.setItem(storageValueKey, val);
       }}
-      popupRender={(menu) => (
+      popupRender={!hideAddOption ? (menu) => (
         <>
           {menu}
           <Divider style={{ margin: '8px 0' }} />
@@ -69,11 +70,11 @@ export const SyncSelect = ({
             </Button>
           </div>
         </>
-      )}
+      ) : undefined}
       // ✅ label is plain string (for clean selected value)
       options={options.map((item) => ({ label: item, value: item }))}
       // ✅ render delete icon only inside dropdown options
-      optionRender={(option) => (
+      optionRender={!hideAddOption ? (option) => (
         <Space className="flex justify-between w-full">
           <span>{option.label}</span>
           <DeleteOutlined
@@ -84,7 +85,7 @@ export const SyncSelect = ({
             }}
           />
         </Space>
-      )}
+      ): undefined}
       className={className}
     />
   );

@@ -1,15 +1,18 @@
-import {useRef} from 'react';
+import { useRef } from 'react';
 import { Tooltip, Button } from 'antd';
-import {  useState } from 'react';
+import { useState } from 'react';
 import copy from 'copy-to-clipboard';
 
-export const CopyCherryCommit = ({ sha, targetBranch }) => {
-    const timeoutRef = useRef(null);
+export const CopyCherryCommitList = ({ shaList, targetBranch }) => {
+  const timeoutRef = useRef(null);
   const [isCopied, setIsCopied] = useState(false);
 
   const handleCopy = () => {
+    const cherryPickCmd = shaList.join(" ");
+
     copy(`git checkout ${targetBranch}
-git cherry-pick ${sha}`);
+git cherry-pick ${cherryPickCmd}`);
+
     setIsCopied(true);
 
     if (timeoutRef.current) {
@@ -23,9 +26,9 @@ git cherry-pick ${sha}`);
 
   return (
     <Tooltip placement="bottom" title={<span>Copy cherry-pick command to branch <b>{targetBranch}</b></span>}>
-       <Button type="link" onClick={handleCopy}>
-          {isCopied ? 'Copied' : 'Copy'}
-        </Button>
+      <Button type="link" onClick={handleCopy}>
+        {isCopied ? 'Copied' : 'Copy'}
+      </Button>
     </Tooltip>
   );
 };

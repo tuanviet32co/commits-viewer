@@ -1,5 +1,5 @@
-import  { useState } from 'react';
-import { Button } from 'antd';
+import { useState } from 'react';
+import { Button, Checkbox } from 'antd';
 import { CopyCherryCommit } from './CopyCherryCommit';
 
 const JiraLine = ({ defaultLine, index }) => {
@@ -50,7 +50,10 @@ export const CommitItem = ({
   isSkip,
   updateToSkip,
   isPick,
-  updateToPick
+  updateToPick,
+  targetBranch,
+  isSelected,
+  onCheckboxChange,
 }) => {
   const [expanded, setExpanded] = useState(false);
 
@@ -68,8 +71,9 @@ export const CommitItem = ({
       className={`px-6 py-3 rounded border border-stone-200 ${isSkip ? ' bg-gray-200' : isDup ? 'bg-yellow-100' : ''}`}
     >
       <div className='flex justify-between items-center'>
-        <JiraLine index={index} defaultLine={defaultLine}/>
-        <CopyCherryCommit sha={sha} />
+        <Checkbox checked={isSelected} onChange={onCheckboxChange} className='mr-2' />
+        <JiraLine index={index} defaultLine={defaultLine} />
+        <CopyCherryCommit sha={sha} targetBranch={targetBranch} />
         {detailLines?.length && JSON.stringify(detailLines) !== '[""]' &&
           <Button type="link" onClick={handleExpand}>
             {expanded ? 'Collapse' : 'Expand'}

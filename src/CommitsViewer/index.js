@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import axios from 'axios';
-import { Button, Spin,  Select } from 'antd';
-import { CommitItem } from './CommitItem';
+import { Button, Spin } from 'antd';
+import { BranchItem } from './BranchItem';
 import { SyncSelect } from './SyncSelect';
 
 const REPOS = 'REPOS';
@@ -188,21 +188,13 @@ const CommitsViewer = () => {
           className='w-96'
         />
         <div>Per Page:</div>
-        <Select
+        <SyncSelect
           value={perPage}
-          onChange={(val) => {
-            setPerPage(val);
-            localStorage.setItem(PER_PAGE, val);
-          }}
-          options={[
-            { value: 100, label: 100 },
-            { value: 200, label: 200 },
-            { value: 300, label: 300 },
-            { value: 400, label: 400 },
-            { value: 500, label: 500 },
-            { value: 700, label: 700 },
-          ]}
-          className='w-20'
+          setValue={setPerPage}
+          storageValueKey={PER_PAGE}
+          defaultReposOptions={[100, 200, 300, 400, 500, 700]}
+          className='w-24'
+          hideAddOption
         />
         <Button type="primary" onClick={handleFetchCommits} >
           Submit
@@ -229,34 +221,21 @@ const CommitsViewer = () => {
             storageKey: BRANCH2,
             hasError: branch2Error,
             isMaster: true
-          }].map((v) =>
+          }].map((v, index) =>
           (<div className="w-1/2" key={v.storageKey}>
-            <div className="flex items-center space-x-4 mb-4">
-              <h2 className="text-xl font-semibold mb-2">Branch: </h2>
-              <SyncSelect
-                value={v.branch}
-                setValue={v.setBranch}
-                storageValueKey={v.storageKey}
-                defaultReposOptions={['develop', 'master']}
-                className='w-96'
-              />  
-            </div>
-            {v.hasError && <div className='mb-4 text-red-500'>Error fetching commits for this branch. Please check the branch name or your network connection.</div>}
-            <ul className="list-disc pl-5 space-y-4">
-              {v.commits.map((commit, index) => (
-                <CommitItem
-                  key={commit.sha}
-                  sha={commit.sha}
-                  index={index}
-                  data={commit.commit.message}
-                  isDup={commit.isDup}
-                  isSkip={v.skipList.includes(commit.sha)}
-                  updateToSkip={() => updateToSkip(commit.sha, false)}
-                  isPick={v.pickList.includes(commit.sha)}
-                  updateToPick={() => updateToPick(commit.sha, false)}
-                />
-              ))}
-            </ul>
+            <BranchItem
+              updateToSkip={updateToSkip}
+              updateToPick={updateToPick}
+              branch={v.branch}
+              setBranch={v.setBranch}
+              commits={v.commits}
+              skipList={v.skipList}
+              pickList={v.pickList}
+              storageKey={v.storageKey}
+              hasError={v.hasError}
+              targetBranch={index === 0 ? branch2: branch1}
+              isMaster={v.isMaster}
+            />
           </div>
           ))}
       </div>
