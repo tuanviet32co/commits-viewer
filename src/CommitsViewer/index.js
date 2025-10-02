@@ -1,9 +1,16 @@
 import { useMemo, useState } from 'react';
 import axios from 'axios';
-import { Button, Spin, Select } from 'antd';
+import { Button, Spin,  Select } from 'antd';
 import { CommitItem } from './CommitItem';
+import { SyncSelect } from './SyncSelect';
 
 const REPOS = 'REPOS';
+const defaultReposOptions = [
+  'frontend',
+  'virtualsmile',
+  'hy-genius',
+];
+
 const PER_PAGE = 'PER_PAGE';
 const BRANCH1 = 'BRANCH1';
 const BRANCH2 = 'BRANCH2';
@@ -16,6 +23,7 @@ const PICK_MASTER = 'PICK_MASTER';
 
 const CommitsViewer = () => {
   const [repos, setRepos] = useState(localStorage.getItem(REPOS) || 'frontend');
+
   const [branch1, setBranch1] = useState(localStorage.getItem(BRANCH1) || 'develop');
   const [branch2, setBranch2] = useState(localStorage.getItem(BRANCH2) || 'develop');
 
@@ -84,20 +92,20 @@ const CommitsViewer = () => {
     const per_page = Math.min(perPage, 100);
     const page_count = perPage <= 100 ? 1 : Math.floor(perPage / 100);
     setIsLoading(true);
-    setBranch1Error(false); 
+    setBranch1Error(false);
     setBranch2Error(false);
     const [branch1CommitRes, branch2CommitRes] = await Promise.all([
       Promise.allSettled([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits(branch1, { page: n, per_page }))),
       Promise.allSettled([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits(branch2, { page: n, per_page }))),
     ]);
     setIsLoading(false);
-    if (branch1CommitRes.some(v => v.status === 'rejected' || !v.value?.length)) {
+    if (branch1CommitRes.some(v => v.status === 'rejected' || v.value === undefined)) {
       setBranch1Error(true);
     } else {
       setBranch1Commits(branch1CommitRes.map(v => v?.value).flat());
     }
 
-    if (branch2CommitRes.some(v => v.status === 'rejected' || !v.value?.length)) {
+    if (branch2CommitRes.some(v => v.status === 'rejected' || v.value === undefined)) {
       setBranch2Error(true);
     } else {
       setBranch2Commits(branch2CommitRes.map(v => v?.value).flat());
@@ -170,18 +178,12 @@ const CommitsViewer = () => {
     <div className="p-4">
       <div className='py-8 flex items-center w-full gap-4'>
         <div>Repos:</div>
-        <Select
+        <SyncSelect
           value={repos}
-          onChange={(val) => {
-            setRepos(val);
-            localStorage.setItem(REPOS, val);
-          }}
-          options={[
-            { value: 'frontend', label: 'frontend' },
-            { value: 'virtualsmile', label: 'virtualsmile' },
-            { value: 'hy-genius', label: 'hy-genius' },
-          ]}
-          className='w-40'
+          setValue={setRepos}
+          storageValueKey={REPOS}
+          defaultReposOptions={defaultReposOptions}
+          className='w-96'
         />
         <div>Per Page:</div>
         <Select
@@ -229,18 +231,13 @@ const CommitsViewer = () => {
           (<div className="w-1/2" key={v.storageKey}>
             <div className="flex items-center space-x-4 mb-4">
               <h2 className="text-xl font-semibold mb-2">Branch: </h2>
-              <Select
+              <SyncSelect
                 value={v.branch}
-                onChange={(val) => {
-                  v.setBranch(val);
-                  localStorage.setItem(v.storageKey, val);
-                }}
-                options={[
-                  { value: 'develop', label: 'develop' },
-                  { value: 'master', label: 'master' },
-                ]}
+                setValue={v.setBranch}
+                storageValueKey={v.storageKey}
+                defaultReposOptions={['develop', 'master']}
                 className='w-96'
-              />
+              />  
             </div>
             {v.hasError && <div className='mb-4 text-red-500'>Error fetching commits for this branch. Please check the branch name or your network connection.</div>}
             <ul className="list-disc pl-5 space-y-4">

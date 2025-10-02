@@ -12,7 +12,6 @@ const JiraLine = ({ defaultLine, index }) => {
 
   // --- JIRA ---
   const jiraMatch = line.match(jiraRegex);
-  let jiraLink = null;
   if (jiraMatch) {
     const ticket = jiraMatch[0].replace(/\s/, "-"); // normalize Fron 12607 → FRON-12607
     const jiraUrl = `https://frontierco.atlassian.net/browse/${ticket.toUpperCase()}`;
