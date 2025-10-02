@@ -1,4 +1,3 @@
-import React from 'react';
 import CommitsViewer from './CommitsViewer';
 
 function App() {

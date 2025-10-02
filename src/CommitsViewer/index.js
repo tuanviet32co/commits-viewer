@@ -1,9 +1,12 @@
 import { useMemo, useState } from 'react';
 import axios from 'axios';
-import { FetchForm } from '../FetchForm';
-import { Button, Spin } from 'antd';
+import { Button, Spin, Select } from 'antd';
 import { CommitItem } from './CommitItem';
 
+const REPOS = 'REPOS';
+const PER_PAGE = 'PER_PAGE';
+const BRANCH1 = 'BRANCH1';
+const BRANCH2 = 'BRANCH2';
 
 const SKIP_DEVELOP = 'SKIP_DEVELOP';
 const SKIP_MASTER = 'SKIP_MASTER';
@@ -12,15 +15,20 @@ const PICK_DEVELOP = 'PICK_DEVELOP';
 const PICK_MASTER = 'PICK_MASTER';
 
 const CommitsViewer = () => {
+  const [repos, setRepos] = useState(localStorage.getItem(REPOS) || 'frontend');
+  const [branch1, setBranch1] = useState(localStorage.getItem(BRANCH1) || 'develop');
+  const [branch2, setBranch2] = useState(localStorage.getItem(BRANCH2) || 'develop');
 
   const [argsState, setArgsState] = useState(1);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [developCommits, setDevelopCommits] = useState([]);
-  const [masterCommits, setMasterCommits] = useState([]);
+  const [branch1Commits, setBranch1Commits] = useState([]);
+  const [branch2Commits, setBranch2Commits] = useState([]);
 
   const [skipDevelop, setSkipDevelop] = useState(JSON.parse(localStorage.getItem(SKIP_DEVELOP) || "[]"));
   const [skipMaster, setSkipMaster] = useState(JSON.parse(localStorage.getItem(SKIP_MASTER) || "[]"));
+
+  const [perPage, setPerPage] = useState(JSON.parse(localStorage.getItem(PER_PAGE) || '100'));
 
   const updateToSkip = (sha, isMaster) => {
     if (isMaster) {
@@ -52,12 +60,11 @@ const CommitsViewer = () => {
   const fetchCommits = async (branch, args) => {
     const per_pageVal = `per_page=${args.per_page}`;
     const pageVal = `page=${args.page}`;
-    // const sinceVal = args.since ? `&since=${args.since}` : '';
     const queryVal = `?sha=${branch}&${per_pageVal}&${pageVal}`;
 
     try {
       const response = await axios.get(
-        `https://api.github.com/repos/${process.env.REACT_APP_REPOS_PATH}/commits${queryVal}`,
+        `https://api.github.com/repos/32S-Dental/${repos}/commits${queryVal}`,
         {
           headers: {
             Authorization: `Bearer ${process.env.REACT_APP_GITHUB_TOKEN}`,
@@ -70,35 +77,44 @@ const CommitsViewer = () => {
     }
   };
 
-  const handleFetchCommits = async (args) => {
-    const per_page = Math.min(args.per_page, 100);
-    const page_count = args.per_page <= 100 ? 1 : Math.floor(args.per_page / 100);
+  const [branch1Error, setBranch1Error] = useState(false);
+  const [branch2Error, setBranch2Error] = useState(false);
+
+  const handleFetchCommits = async () => {
+    const per_page = Math.min(perPage, 100);
+    const page_count = perPage <= 100 ? 1 : Math.floor(perPage / 100);
     setIsLoading(true);
-    const [develop, master] = await Promise.all([
-      Promise.all([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits('develop', { page: n, per_page }))),
-      // Promise.all([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits('beta', { page: n, per_page }))),
-      // Promise.all([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits('demo', { page: n, per_page }))),
-      Promise.all([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits('master', { page: n, per_page }))),
-      // Promise.all([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits('main', { page: n, per_page }))),
-      // Promise.all([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits('deploy/toan-env-from-develop', { page: n, per_page }))),
+    setBranch1Error(false); 
+    setBranch2Error(false);
+    const [branch1CommitRes, branch2CommitRes] = await Promise.all([
+      Promise.allSettled([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits(branch1, { page: n, per_page }))),
+      Promise.allSettled([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits(branch2, { page: n, per_page }))),
     ]);
     setIsLoading(false);
-    setDevelopCommits(develop.flat());
-    setMasterCommits(master.flat());
-  };
+    if (branch1CommitRes.some(v => v.status === 'rejected' || !v.value?.length)) {
+      setBranch1Error(true);
+    } else {
+      setBranch1Commits(branch1CommitRes.map(v => v?.value).flat());
+    }
 
+    if (branch2CommitRes.some(v => v.status === 'rejected' || !v.value?.length)) {
+      setBranch2Error(true);
+    } else {
+      setBranch2Commits(branch2CommitRes.map(v => v?.value).flat());
+    }
+  };
 
   const handleLoadMore = async () => {
     setIsLoadingMore(true);
     const nextArgsState = { ...argsState, page: argsState.page + 1 };
     setArgsState(nextArgsState);
-    const [develop, master] = await Promise.all([
-      fetchCommits('develop', nextArgsState),
-      fetchCommits('master', nextArgsState),
+    const [branch1MoreCommit, branch2MoreCommit] = await Promise.all([
+      fetchCommits(branch1, nextArgsState),
+      fetchCommits(branch2, nextArgsState),
     ]);
     setIsLoadingMore(false);
-    setDevelopCommits(v => [...v, ...develop]);
-    setMasterCommits(v => [...v, ...master]);
+    setBranch1Commits(v => [...v, ...branch1MoreCommit]);
+    setBranch2Commits(v => [...v, ...branch2MoreCommit]);
   };
 
   const getUniqueCommitsSha = (commits1, commits2) => {
@@ -127,74 +143,125 @@ const CommitsViewer = () => {
   };
 
   const [uniqueDevelopCommitsSha, uniqueMasterCommitsSha] = useMemo(() => {
-    const d = getUniqueCommitsSha(developCommits, masterCommits);
-    const m = getUniqueCommitsSha(masterCommits, developCommits);
+    const d = getUniqueCommitsSha(branch1Commits, branch2Commits);
+    const m = getUniqueCommitsSha(branch2Commits, branch1Commits);
     return [d, m];
-  }, [developCommits, masterCommits]);
+  }, [branch1Commits, branch2Commits]);
 
-  const develops = useMemo(() => {
-    return developCommits.map((v) => {
+  const branch1NetCommits = useMemo(() => {
+    return branch1Commits.map((v) => {
       return {
         ...v,
         isDup: uniqueDevelopCommitsSha.includes(v.sha),
       }
     });
-  }, [developCommits, uniqueDevelopCommitsSha]);
+  }, [branch1Commits, uniqueDevelopCommitsSha]);
 
-  const masters = useMemo(() => {
-    return masterCommits.map((v) => {
+  const branch2NetCommits = useMemo(() => {
+    return branch2Commits.map((v) => {
       return {
         ...v,
         isDup: uniqueMasterCommitsSha.includes(v.sha),
       }
     });
-  }, [masterCommits, uniqueMasterCommitsSha]);
+  }, [branch2Commits, uniqueMasterCommitsSha]);
 
   return (
     <div className="p-4">
-      <div className='py-8 flex items-center w-full'>
-        <FetchForm onSummit={handleFetchCommits} />
+      <div className='py-8 flex items-center w-full gap-4'>
+        <div>Repos:</div>
+        <Select
+          value={repos}
+          onChange={(val) => {
+            setRepos(val);
+            localStorage.setItem(REPOS, val);
+          }}
+          options={[
+            { value: 'frontend', label: 'frontend' },
+            { value: 'virtualsmile', label: 'virtualsmile' },
+            { value: 'hy-genius', label: 'hy-genius' },
+          ]}
+          className='w-40'
+        />
+        <div>Per Page:</div>
+        <Select
+          value={perPage}
+          onChange={(val) => {
+            setPerPage(val);
+            localStorage.setItem(PER_PAGE, val);
+          }}
+          options={[
+            { value: 100, label: 100 },
+            { value: 200, label: 200 },
+            { value: 300, label: 300 },
+            { value: 400, label: 400 },
+            { value: 500, label: 500 },
+            { value: 700, label: 700 },
+          ]}
+          className='w-20'
+        />
+        <Button type="primary" onClick={handleFetchCommits} >
+          Submit
+        </Button>
         <Spin spinning={isLoading} />
       </div>
       <div className="flex space-x-4">
-        <div className="w-1/2">
-          <h2 className="text-xl font-semibold mb-2">Dev Branch</h2>
-          <ul className="list-disc pl-5 space-y-4">
-            {develops.map((commit, index) => (
-              <CommitItem
-                key={commit.sha}
-                sha={commit.sha}
-                index={index}
-                data={commit.commit.message}
-                isDup={commit.isDup}
-                isSkip={skipDevelop.includes(commit.sha)}
-                updateToSkip={() => updateToSkip(commit.sha, false)}
-                isPick={pickDevelop.includes(commit.sha)}
-                updateToPick={() => updateToPick(commit.sha, false)}
+        {[
+          {
+            branch: branch1,
+            setBranch: setBranch1,
+            commits: branch1NetCommits,
+            skipList: skipDevelop,
+            pickList: pickDevelop,
+            storageKey: BRANCH1,
+            hasError: branch1Error,
+            isMaster: false
+          }, {
+            branch: branch2,
+            setBranch: setBranch2,
+            commits: branch2NetCommits,
+            skipList: skipMaster,
+            pickList: pickMaster,
+            storageKey: BRANCH2,
+            hasError: branch2Error,
+            isMaster: true
+          }].map((v) =>
+          (<div className="w-1/2" key={v.storageKey}>
+            <div className="flex items-center space-x-4 mb-4">
+              <h2 className="text-xl font-semibold mb-2">Branch: </h2>
+              <Select
+                value={v.branch}
+                onChange={(val) => {
+                  v.setBranch(val);
+                  localStorage.setItem(v.storageKey, val);
+                }}
+                options={[
+                  { value: 'develop', label: 'develop' },
+                  { value: 'master', label: 'master' },
+                ]}
+                className='w-96'
               />
-            ))}
-          </ul>
-        </div>
-        <div className="w-1/2">
-          <h2 className="text-xl font-semibold mb-2">Master Branch</h2>
-          <ul className="list-disc pl-5 space-y-4">
-            {masters.map((commit, index) => (
-              <CommitItem
-                key={commit.sha}
-                sha={commit.sha}
-                index={index}
-                data={commit.commit.message}
-                isDup={commit.isDup}
-                isSkip={skipMaster.includes(commit.sha)}
-                updateToSkip={() => updateToSkip(commit.sha, true)}
-                isPick={pickMaster.includes(commit.sha)}
-                updateToPick={() => updateToPick(commit.sha, true)}
-              />
-            ))}
-          </ul>
-        </div>
+            </div>
+            {v.hasError && <div className='mb-4 text-red-500'>Error fetching commits for this branch. Please check the branch name or your network connection.</div>}
+            <ul className="list-disc pl-5 space-y-4">
+              {v.commits.map((commit, index) => (
+                <CommitItem
+                  key={commit.sha}
+                  sha={commit.sha}
+                  index={index}
+                  data={commit.commit.message}
+                  isDup={commit.isDup}
+                  isSkip={v.skipList.includes(commit.sha)}
+                  updateToSkip={() => updateToSkip(commit.sha, false)}
+                  isPick={v.pickList.includes(commit.sha)}
+                  updateToPick={() => updateToPick(commit.sha, false)}
+                />
+              ))}
+            </ul>
+          </div>
+          ))}
       </div>
-      {develops.length > 0 &&
+      {branch1NetCommits.length > 0 &&
         <div className='flex justify-center items-center p-6'>
           <Button loading={isLoadingMore} onClick={handleLoadMore}>Load more</Button>
         </div>}
