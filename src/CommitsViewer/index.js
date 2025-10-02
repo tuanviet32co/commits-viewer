@@ -94,6 +94,8 @@ const CommitsViewer = () => {
     setIsLoading(true);
     setBranch1Error(false);
     setBranch2Error(false);
+    setBranch1Commits([]);
+    setBranch2Commits([]);
     const [branch1CommitRes, branch2CommitRes] = await Promise.all([
       Promise.allSettled([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits(branch1, { page: n, per_page }))),
       Promise.allSettled([...Array(page_count).keys()].map(i => i + 1).map(n => fetchCommits(branch2, { page: n, per_page }))),

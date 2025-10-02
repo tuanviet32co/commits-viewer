@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
-import { Button, Divider, Input, Select } from 'antd';
-import { PlusOutlined } from '@ant-design/icons';
+import { Button, Divider, Input, Select, Space } from 'antd';
+import { PlusOutlined, DeleteOutlined } from '@ant-design/icons';
 
 let index = 0;
 
@@ -12,26 +12,37 @@ export const SyncSelect = ({
   className,
 }) => {
   const storageOptionsKey = `${storageValueKey}_OPTIONS`;
-  const [options, setOptions] = useState(JSON.parse(localStorage.getItem(storageOptionsKey) || JSON.stringify(defaultReposOptions)));
+  const [options, setOptions] = useState(
+    JSON.parse(localStorage.getItem(storageOptionsKey) || JSON.stringify(defaultReposOptions))
+  );
 
   const [name, setName] = useState('');
   const inputRef = useRef(null);
 
-  const onNameChange = (event) => {
-    setName(event.target.value);
-  };
-
   const addItem = (e) => {
     e.preventDefault();
-    setOptions((v) => {
-      const nextVal = [...v, name || `New Item ${index++}`];
+    if (!name.trim()) return;
+
+    setOptions((prev) => {
+      const nextVal = [...prev, name || `New Item ${index++}`];
       localStorage.setItem(storageOptionsKey, JSON.stringify(nextVal));
       return nextVal;
     });
     setName('');
-    setTimeout(() => {
-      inputRef.current?.focus();
-    }, 0);
+    setTimeout(() => inputRef.current?.focus(), 0);
+  };
+
+  const removeItem = (item) => {
+    setOptions((prev) => {
+      const nextVal = prev.filter((i) => i !== item);
+      localStorage.setItem(storageOptionsKey, JSON.stringify(nextVal));
+
+      if (value === item) {
+        setValue(undefined);
+        localStorage.removeItem(storageValueKey);
+      }
+      return nextVal;
+    });
   };
 
   return (
@@ -50,7 +61,7 @@ export const SyncSelect = ({
               placeholder="Please enter item"
               ref={inputRef}
               value={name}
-              onChange={onNameChange}
+              onChange={(e) => setName(e.target.value)}
               onKeyDown={(e) => e.stopPropagation()}
             />
             <Button type="text" icon={<PlusOutlined />} onClick={addItem}>
@@ -59,7 +70,21 @@ export const SyncSelect = ({
           </div>
         </>
       )}
+      // ✅ label is plain string (for clean selected value)
       options={options.map((item) => ({ label: item, value: item }))}
+      // ✅ render delete icon only inside dropdown options
+      optionRender={(option) => (
+        <Space className="flex justify-between w-full">
+          <span>{option.label}</span>
+          <DeleteOutlined
+            style={{ color: '#ffa39e'}}
+            onClick={(e) => {
+              e.stopPropagation();
+              removeItem(option.value);
+            }}
+          />
+        </Space>
+      )}
       className={className}
     />
   );
