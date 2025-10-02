@@ -28,10 +28,10 @@ export const BranchItem = ({
     return selectedCommitIndexs.sort((a, b) => b - a).map((index) => commits[index]?.sha).filter(Boolean);
   }, [selectedCommitIndexs, commits]);
 
-  const handleCheckboxClick = (e) => {
+  const handleCheckboxClick = (indexVal, e) => {
     if (e.nativeEvent.shiftKey && selectedCommitIndexs.length > 0 && e.target.checked) {
       const lastIndex = selectedCommitIndexs[selectedCommitIndexs.length - 1];
-      const [start, end] = [Math.min(lastIndex, index), Math.max(lastIndex, index)];
+      const [start, end] = [Math.min(lastIndex, indexVal), Math.max(lastIndex, indexVal)];
       const range = Array.from({ length: end - start + 1 }, (_, i) => start + i);
       setSelectedCommitIndexs((prev) => {
         // union of old selection + new range
@@ -40,9 +40,9 @@ export const BranchItem = ({
       });
     } else {
       if (e.target.checked) {
-        setSelectedCommitIndexs((prev) => [...prev, index]);
+        setSelectedCommitIndexs((prev) => [...prev, indexVal]);
       } else {
-        setSelectedCommitIndexs((prev) => prev.filter((ii) => ii !== index));
+        setSelectedCommitIndexs((prev) => prev.filter((ii) => ii !== indexVal));
       }
     }
   }
@@ -82,7 +82,7 @@ export const BranchItem = ({
             updateToPick={() => updateToPick(commit.sha, isMaster)}
             targetBranch={targetBranch}
             isSelected={selectedCommitIndexs.includes(index)}
-            onCheckboxChange={handleCheckboxClick}
+            onCheckboxChange={(e) => handleCheckboxClick(index, e)}
           />
         ))}
       </ul>
